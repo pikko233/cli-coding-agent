@@ -6,6 +6,10 @@ import { useCallback, useEffect, useRef } from "react";
 import { useRenderer } from "@opentui/react";
 import { useCommandMenu } from "./command-menu/use-command-menu";
 import type { Command } from "./command-menu/type";
+import { useToast } from "../providers/toast";
+import { useKeyboardLayer } from "../providers/keyboard-layer";
+import { useDialog } from "../providers/dialog";
+import { useTheme } from "../providers/theme";
 
 type Props = {
   onSubmit: (text: string) => void;
@@ -23,6 +27,10 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
   const textareaRef = useRef<TextareaRenderable>(null);
   const onSubmitRef = useRef<() => void>(() => {});
   const renderer = useRenderer();
+  const toast = useToast();
+  const dialog = useDialog();
+  const { isTopLayer, setResponder } = useKeyboardLayer();
+  const { colors } = useTheme();
 
   const {
     showCommandMenu,
@@ -33,11 +41,6 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
     resolveCommand,
     setSelectedIndex,
   } = useCommandMenu();
-
-  const handleCommandExecute = useCallback((index: number) => {
-    const command = resolveCommand(index);
-    handleCommand(command);
-  }, []);
 
   // textarea输入变化
   const handleTextareaContentChange = useCallback(() => {
@@ -58,12 +61,22 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
       if (command.action) {
         command.action({
           exit: () => renderer.destroy(),
+          toast,
+          dialog,
         });
       } else {
         textarea.insertText(command.value + " ");
       }
     },
-    [renderer],
+    [renderer, toast],
+  );
+
+  const handleCommandExecute = useCallback(
+    (index: number) => {
+      const command = resolveCommand(index);
+      handleCommand(command);
+    },
+    [resolveCommand, handleCommand],
   );
 
   // 向AI Agent发送消息
@@ -105,12 +118,30 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
     handleSubmit();
   };
 
+  // 页面初始化挂载时，将base压入栈中
+  useEffect(() => {
+    setResponder("base", () => {
+      // 按下ctrl+c时执行以下操作
+      if (disabled) return false;
+
+      const textarea = textareaRef.current;
+      if (textarea && textarea.plainText.trim()) {
+        textarea.setText("");
+        return true;
+      }
+
+      return false;
+    });
+
+    return () => setResponder("base", null);
+  }, [disabled, setResponder]);
+
   return (
     <box alignItems="center" width="100%">
       {/* 左边框 */}
       <box
         border={["left"]}
-        borderColor="cyan"
+        borderColor={colors.primary}
         width="100%"
         customBorderChars={{
           ...EmptyBorder,
@@ -124,7 +155,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
           justifyContent="center"
           paddingX={2}
           paddingY={1}
-          backgroundColor="#1A1A24"
+          backgroundColor={colors.surface}
           width="100%"
           gap={1}
         >
@@ -135,7 +166,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
               bottom="100%"
               left={0}
               width="100%"
-              backgroundColor="#1A1A24"
+              backgroundColor={colors.surface}
               zIndex={10}
             >
               <CommandMenu
@@ -150,7 +181,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
           {/* 文本输入区域 */}
           <textarea
             ref={textareaRef}
-            focused={!disabled}
+            focused={!disabled && !isTopLayer("dialog")}
             keyBindings={TEXTAREA_KEY_BINDING}
             width="100%"
             placeholder={`有什么想问的...例："请你分析这个项目的架构"`}
