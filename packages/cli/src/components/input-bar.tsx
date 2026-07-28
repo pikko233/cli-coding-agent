@@ -68,7 +68,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
         textarea.insertText(command.value + " ");
       }
     },
-    [renderer, toast],
+    [renderer, toast, dialog],
   );
 
   const handleCommandExecute = useCallback(
