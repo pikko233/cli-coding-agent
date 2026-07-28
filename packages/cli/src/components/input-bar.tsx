@@ -14,6 +14,7 @@ import { useTheme } from "../providers/theme";
 type Props = {
   onSubmit: (text: string) => void;
   disabled?: boolean;
+  placeholder?: string;
 };
 
 export const TEXTAREA_KEY_BINDING: KeyBinding[] = [
@@ -23,7 +24,11 @@ export const TEXTAREA_KEY_BINDING: KeyBinding[] = [
   { name: "enter", shift: true, action: "newline" },
 ];
 
-export const InputBar = ({ onSubmit, disabled = false }: Props) => {
+export const InputBar = ({
+  onSubmit,
+  disabled = false,
+  placeholder = "有什么想问的...例: 请你分析这个项目的架构",
+}: Props) => {
   const textareaRef = useRef<TextareaRenderable>(null);
   const onSubmitRef = useRef<() => void>(() => {});
   const renderer = useRenderer();
@@ -184,7 +189,8 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
             focused={!disabled && !isTopLayer("dialog")}
             keyBindings={TEXTAREA_KEY_BINDING}
             width="100%"
-            placeholder={`有什么想问的...例："请你分析这个项目的架构"`}
+            wrapMode="char"
+            placeholder={placeholder}
             onContentChange={handleTextareaContentChange}
           />
           {/* 状态栏 */}
