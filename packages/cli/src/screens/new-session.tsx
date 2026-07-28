@@ -24,7 +24,7 @@ export function NewSession() {
   if (!state) return null;
 
   return (
-    <SessionShell onSubmit={() => {}} inputDisabled={false} loading={true}>
+    <SessionShell onSubmit={() => {}} inputDisabled loading>
       <UserMessage message={state.message} />
       <BotMessage
         content="This is a simple bot response to demostrate the message layout."
