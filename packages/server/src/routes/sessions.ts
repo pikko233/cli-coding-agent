@@ -2,7 +2,7 @@ import { findSupportedChatModel } from "@cli-coding-agent/shared";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { db } from "@cli-coding-agent/database";
+import { db } from "@cli-coding-agent/database/client";
 import { Role, Mode, MessageStatus } from "@cli-coding-agent/database/enums";
 
 const createSessionSchema = z.object({
@@ -25,7 +25,7 @@ const createSessionValidator = zValidator(
   createSessionSchema,
   (result, c) => {
     if (!result.success) {
-      return c.json({ error: "Invaild request body" }, 400);
+      return c.json({ error: "请求体格式错误" }, 400);
     }
   },
 );

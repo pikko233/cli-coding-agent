@@ -2,18 +2,14 @@ import { useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
 import { DEFAULT_CHAT_MODEL_ID } from "@cli-coding-agent/shared";
 import { useLocation, useNavigate } from "react-router";
-import {
-  BotMessage,
-  ErrorMessage,
-  UserMessage,
-} from "../components/messages/index";
+import { UserMessage } from "../components/messages/index";
 import { SessionShell } from "../components/session-shell";
 import { useToast } from "../providers/toast";
 import { apiClient } from "../lib/api-client";
 import { getErrorMessage } from "../lib/http-errors";
 
 const newSessionStateSchema = z.object({
-  message: z.string(),
+  message: z.string().trim().min(1),
 });
 
 export function NewSession() {

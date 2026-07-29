@@ -79,7 +79,7 @@ export function Session() {
   }, [id, prefetched, toast, navigate]);
 
   if (!session) {
-    return <SessionShell onSubmit={() => {}} inputDisabled />;
+    return <SessionShell onSubmit={() => {}} inputDisabled loading />;
   }
 
   return (
