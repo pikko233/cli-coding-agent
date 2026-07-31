@@ -9,7 +9,7 @@ import { type ChatStreamEvent } from "@cli-coding-agent/shared";
 import { isSupportedChatModel, resolveChatModel } from "../lib/models";
 
 const submitSchema = z.object({
-  content: z.string(),
+  content: z.string().trim().min(1, "消息内容不能为空"),
   mode: z.enum(Mode),
   model: z.string().refine(isSupportedChatModel, "暂不支持该模型"),
 });
@@ -78,7 +78,7 @@ async function streamAIResponse(
 
   const persistInterruptedMessage = async () => {
     if (fullText.length === 0) return 0;
-    const duration = Math.round((Date.now() - startTime) / 1000);
+    const durationMs = Date.now() - startTime;
     await db.message.create({
       data: {
         sessionId,
@@ -87,7 +87,7 @@ async function streamAIResponse(
         mode,
         model,
         content: fullText,
-        duration,
+        duration: Math.round(durationMs / 1000),
       },
     });
   };
@@ -126,7 +126,7 @@ async function streamAIResponse(
       return;
     }
 
-    const duration = Math.round((Date.now() - startTime) / 1000);
+    const durationMs = Date.now() - startTime;
 
     // 流正常结束后保存完整的助手消息。
     const assistantMessage = await db.message.create({
@@ -137,14 +137,14 @@ async function streamAIResponse(
         model,
         content: fullText,
         mode,
-        duration,
+        duration: Math.round(durationMs / 1000),
       },
     });
 
     const doneEvent: ChatStreamEvent = {
       type: "done",
       messageId: assistantMessage.id,
-      durationMs: duration * 1000,
+      durationMs: durationMs,
     };
 
     await stream.writeSSE({

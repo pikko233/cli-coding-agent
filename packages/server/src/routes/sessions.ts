@@ -105,7 +105,6 @@ const app = new Hono()
 
     Sentry.logger.info("会话创建成功", {
       sessionId: session.id,
-      title: session.title,
     });
 
     return c.json(session, 201);

@@ -212,7 +212,11 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
             // 合并连续文本片段，实时更新正在生成的回复。
             const last = parts[parts.length - 1];
             if (last && last.type === "text") {
-              last.text += event.text;
+              // last.text += event.text;
+              parts[parts.length - 1] = {
+                type: "text",
+                text: last.text + event.text,
+              };
             } else {
               parts.push({ type: "text", text: event.text });
             }
@@ -221,6 +225,9 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
           }
           case "done": {
             if (!isActiveRequest(activeStream.requestId)) return;
+
+            // 已生成正式消息，禁止后续再作为中断消息捕获。
+            activeStream.interruptedCaptured = true;
 
             // 收到完成事件后，将临时流式内容转为正式消息。
             const fullText = parts
@@ -287,7 +294,10 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
         await handleStream(response, activeStream);
       } catch (e) {
         // 用户主动停止属于正常流程，不显示错误消息。
-        if (e instanceof DOMException && e.name === "AbortError") {
+        if (
+          controller.signal.aborted ||
+          (e instanceof Error && e.name === "AbortError")
+        ) {
           return;
         }
 
