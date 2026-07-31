@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/hono/bun";
 import { findSupportedChatModel } from "@cli-coding-agent/shared";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
@@ -25,7 +26,7 @@ const createSessionValidator = zValidator(
   createSessionSchema,
   (result, c) => {
     if (!result.success) {
-      return c.json({ error: "请求体格式错误" }, 400);
+      return c.json({ error: "新建会话参数错误" }, 400);
     }
   },
 );
@@ -40,6 +41,11 @@ const app = new Hono()
         createdAt: true,
       },
     });
+
+    Sentry.logger.info("会话列表", {
+      count: sessions.length,
+    });
+
     return c.json(sessions);
   })
   .get("/:id", async (c) => {
@@ -56,13 +62,23 @@ const app = new Hono()
     });
 
     if (!session) {
+      Sentry.logger.warn("会话不存在", {
+        sessionId: id,
+        userId: "mock-user",
+      });
+
       return c.json(
         {
-          error: "该对话不存在",
+          error: "会话不存在",
         },
         404,
       );
     }
+
+    Sentry.logger.info("会话加载成功", {
+      sessionId: session.id,
+      messageCount: session.messages.length,
+    });
 
     return c.json(session);
   })
@@ -85,6 +101,11 @@ const app = new Hono()
       include: {
         messages: true,
       },
+    });
+
+    Sentry.logger.info("会话创建成功", {
+      sessionId: session.id,
+      title: session.title,
     });
 
     return c.json(session, 201);

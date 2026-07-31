@@ -61,4 +61,4 @@ export const chatStreamEventSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-export type chatStreamEvent = z.infer<typeof chatStreamEventSchema>;
+export type ChatStreamEvent = z.infer<typeof chatStreamEventSchema>;

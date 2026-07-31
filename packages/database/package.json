@@ -3,7 +3,6 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./enums": "./src/enums.ts"
   },
