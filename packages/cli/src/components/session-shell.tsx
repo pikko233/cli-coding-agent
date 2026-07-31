@@ -5,9 +5,10 @@ import { Spinner } from "./spinner";
 
 type Props = {
   children?: ReactNode;
-  onSubmit: () => void;
+  onSubmit: (text: string) => void;
   inputDisabled?: boolean;
   loading?: boolean;
+  interruptible?: boolean;
 };
 
 export function SessionShell({
@@ -15,6 +16,7 @@ export function SessionShell({
   onSubmit,
   inputDisabled = false,
   loading = false,
+  interruptible = false,
 }: Props) {
   return (
     // 会话聊天框外壳
@@ -52,7 +54,12 @@ export function SessionShell({
         paddingLeft={1}
       >
         <box flexDirection="row" alignItems="center" gap={2}>
-          {loading ? <Spinner /> : null}
+          {loading ? (
+            <>
+              <Spinner />
+              {interruptible && <text>按esc键中断</text>}
+            </>
+          ) : null}
         </box>
 
         <box flexDirection="row" flexShrink={0} gap={1} marginLeft="auto">

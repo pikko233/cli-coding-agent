@@ -13,6 +13,6 @@ export {
   messagePartSchema,
   messagePartsSchema,
   chatStreamEventSchema,
-  type chatStreamEvent,
+  type ChatStreamEvent,
   type messagePart,
 } from "./schemas";
