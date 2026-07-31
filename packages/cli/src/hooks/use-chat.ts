@@ -155,7 +155,7 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
         },
       ]);
     },
-    [],
+    [updateMessages],
   );
 
   // 读取服务端 SSE，并根据事件类型更新聊天消息。
