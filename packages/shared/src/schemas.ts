@@ -28,7 +28,7 @@ export const messagePartSchema = z.discriminatedUnion("type", [
 
 export const messagePartsSchema = z.array(messagePartSchema);
 
-export type messagePart = z.infer<typeof messagePartSchema>;
+export type MessagePart = z.infer<typeof messagePartSchema>;
 
 export const chatStreamEventSchema = z.discriminatedUnion("type", [
   z.object({

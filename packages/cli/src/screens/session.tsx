@@ -8,14 +8,19 @@ import { useToast } from "../providers/toast";
 import { useEffect, useMemo, useState } from "react";
 import { getErrorMessage } from "../lib/http-errors";
 import prettyMs from "pretty-ms";
-import { useChat, type Message } from "../hooks/use-chat";
 import {
-  DEFAULT_CHAT_MODEL_ID,
+  useChat,
+  type ClientMessagePart,
+  type Message,
+} from "../hooks/use-chat";
+import {
+  messagePartsSchema,
   type SupportedChatModelId,
 } from "@cli-coding-agent/shared";
 import { MessageStatus } from "@cli-coding-agent/database/enums";
 import { useKeyboardLayer } from "../providers/keyboard-layer";
 import { useKeyboard } from "@opentui/react";
+import { usePromptConfig } from "../providers/prompt-config";
 
 type SessionData = InferResponseType<
   (typeof apiClient.sessions)[":id"]["$get"],
@@ -49,13 +54,21 @@ function mapDbMessages(dbMessages: SessionData["messages"]): Message[] {
       };
     }
 
+    const parsedParts =
+      msg.parts == null ? null : messagePartsSchema.safeParse(msg.parts);
+    const parts: ClientMessagePart[] = parsedParts?.success
+      ? parsedParts.data.map((p) =>
+          p.type === "tool-call" ? { ...p, status: "done" as const } : p,
+        )
+      : [];
+
     return {
       id: msg.id,
       role: "assistant",
       content: msg.content,
       mode: msg.mode,
       model: msg.model as SupportedChatModelId,
-      parts: [{ type: "text", text: msg.content }],
+      parts,
       ...(msg.duration !== null
         ? { duration: prettyMs(msg.duration * 1000) }
         : {}),
@@ -66,7 +79,7 @@ function mapDbMessages(dbMessages: SessionData["messages"]): Message[] {
 
 function ChatMessage({ msg }: { msg: Message }) {
   if (msg.role === "user") {
-    return <UserMessage message={msg.content} />;
+    return <UserMessage message={msg.content} mode={msg.mode} />;
   }
   if (msg.role === "error") {
     return <ErrorMessage message={msg.content} />;
@@ -91,6 +104,7 @@ function SessionChat({ session }: { session: SessionData }) {
     session.id,
     initialMessages,
   );
+  const { mode, model } = usePromptConfig();
 
   useKeyboard((key) => {
     if (
@@ -109,9 +123,7 @@ function SessionChat({ session }: { session: SessionData }) {
 
   return (
     <SessionShell
-      onSubmit={(text) =>
-        submit({ userText: text, mode: "BUILD", model: DEFAULT_CHAT_MODEL_ID })
-      }
+      onSubmit={(text) => submit({ userText: text, mode, model })}
       loading={streaming.status === "streaming"}
       interruptible={streaming.status === "streaming"}
     >

@@ -1,12 +1,14 @@
 import { TextAttributes } from "@opentui/core";
 import { useTheme } from "../../providers/theme";
 import { SplitBorder } from "../border";
+import { Mode } from "@cli-coding-agent/database";
 
 type Props = {
   message: string;
+  mode: Mode;
 };
 
-export function UserMessage({ message }: Props) {
+export function UserMessage({ message, mode }: Props) {
   const { colors } = useTheme();
 
   return (
@@ -14,7 +16,7 @@ export function UserMessage({ message }: Props) {
       {/* 消息边框 */}
       <box
         border={["left"]}
-        borderColor={colors.primary}
+        borderColor={mode === Mode.PLAN ? colors.planMode : colors.primary}
         customBorderChars={{
           ...SplitBorder,
         }}
