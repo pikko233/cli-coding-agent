@@ -64,7 +64,7 @@ export function SessionShell({
 
         <box flexDirection="row" flexShrink={0} gap={1} marginLeft="auto">
           <text>tab</text>
-          <text attributes={TextAttributes.DIM}>agents</text>
+          <text attributes={TextAttributes.DIM}>切换智能体</text>
         </box>
       </box>
     </box>

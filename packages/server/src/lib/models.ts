@@ -1,5 +1,8 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
+import {
+  openai,
+  type OpenAILanguageModelResponsesOptions,
+} from "@ai-sdk/openai";
 import {
   findSupportedChatModel,
   type SupportedChatModel,
@@ -7,18 +10,51 @@ import {
   type SupportedProvider,
 } from "@cli-coding-agent/shared";
 import type { LanguageModel } from "ai";
+import type { ProviderOptions } from "@ai-sdk/provider-utils";
 
 type AnthropicModelId = Extract<
   SupportedChatModel,
   { provider: "anthropic" }
 >["id"];
-type OpenaiModelId = Extract<SupportedChatModel, { provider: "openai" }>["id"];
+type OpenAIModelId = Extract<SupportedChatModel, { provider: "openai" }>["id"];
 
 type ResolvedModel = {
   model: LanguageModel;
   provider: SupportedProvider;
   modelId: SupportedChatModelId;
+  providerOptions?: ProviderOptions;
 };
+
+const ANTHROPIC_PROVIDER_OPTIONS: Partial<
+  Record<AnthropicModelId, ProviderOptions>
+> = {
+  "claude-opus-4.6": {
+    anthropic: {
+      thinking: {
+        type: "enabled",
+        budgetTokens: 10000,
+      },
+    },
+  },
+  "claude-sonnet-4.6": {
+    anthropic: {
+      thinking: {
+        type: "enabled",
+        budgetTokens: 10000,
+      },
+    },
+  },
+};
+
+const OPENAI_PROVIDER_OPTIONS: Partial<Record<OpenAIModelId, ProviderOptions>> =
+  {
+    "gpt-5.4": {
+      openai: {
+        reasoningEffort: "high",
+        reasoningSummary: "detailed",
+      } satisfies OpenAILanguageModelResponsesOptions,
+    },
+  };
 
 // 判断不支持的模型
 function assertUnsupportedModel(provider: never): never {
@@ -30,14 +66,16 @@ function resolvedAnthropicModel(modelId: AnthropicModelId): ResolvedModel {
     model: anthropic(modelId),
     provider: "anthropic",
     modelId,
+    providerOptions: ANTHROPIC_PROVIDER_OPTIONS[modelId],
   };
 }
 
-function resolvedOpenaiModel(modelId: OpenaiModelId): ResolvedModel {
+function resolvedOpenaiModel(modelId: OpenAIModelId): ResolvedModel {
   return {
     model: openai(modelId),
     provider: "openai",
     modelId,
+    providerOptions: OPENAI_PROVIDER_OPTIONS[modelId],
   };
 }
 
