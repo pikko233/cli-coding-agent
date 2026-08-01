@@ -22,6 +22,7 @@ export function createGrepTool(cwd: string) {
     execute: async ({ pattern, path, include }) => {
       const resolved = resolve(cwd, path);
 
+      // 搜索范围不能越过项目根目录。
       if (!resolved.startsWith(cwd)) {
         return {
           error: "Path is outside the project directory",
@@ -29,6 +30,7 @@ export function createGrepTool(cwd: string) {
       }
 
       try {
+        // 直接传参数给 grep，不经过 Shell 拼接。
         const args = [
           "-rn",
           "--color=never",
@@ -54,6 +56,7 @@ export function createGrepTool(cwd: string) {
 
         await proc.exited;
 
+        // grep 的退出码 1 只表示没有匹配，不算执行失败。
         if (proc.exitCode !== 0 && proc.exitCode !== 1) {
           return { error: `grep failed: ${stderr.trim()}` };
         }
@@ -66,6 +69,7 @@ export function createGrepTool(cwd: string) {
         const matches: { file: string; line: number; content: string }[] = [];
         let truncated = false;
 
+        // 只返回前 MAX_MATCHS 条，避免结果过大。
         for (const line of lines) {
           if (matches.length >= MAX_MATCHS) {
             truncated = true;

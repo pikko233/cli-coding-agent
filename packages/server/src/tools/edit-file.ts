@@ -19,6 +19,7 @@ export function createEditFileTool(cwd: string) {
     execute: async ({ path, oldString, newString }) => {
       const resolved = resolve(cwd, path);
 
+      // 文件操作只允许发生在当前项目内。
       if (!resolved.startsWith(cwd)) {
         return { error: "Path is outside the project directory" };
       }
@@ -26,6 +27,7 @@ export function createEditFileTool(cwd: string) {
       try {
         const content = await readFile(resolved, "utf-8");
 
+        // 只有唯一匹配时才替换，避免误改同名代码。
         const occurences = content.split(oldString).length - 1;
 
         if (occurences === 0) {

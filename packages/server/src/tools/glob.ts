@@ -20,6 +20,7 @@ export function createGlobTool(cwd: string) {
     execute: async ({ pattern, path }) => {
       const resolved = resolve(cwd, path);
 
+      // 搜索范围不能越过项目根目录。
       if (!resolved.startsWith(cwd)) {
         return {
           error: "Path is outside the project directory",
@@ -31,6 +32,7 @@ export function createGlobTool(cwd: string) {
         const files: string[] = [];
         let truncated = false;
 
+        // 逐个读取结果，达到上限后立即停止扫描。
         for await (const match of glob.scan({
           cwd: resolved,
           dot: false,
@@ -45,18 +47,18 @@ export function createGlobTool(cwd: string) {
 
           const absoluteMatch = resolve(resolved, match);
           files.push(relative(cwd, absoluteMatch));
-
-          files.sort();
-
-          return {
-            files,
-            ...(truncated ? { truncated: true } : {}),
-          };
         }
+
+        files.sort();
+
+        return {
+          files,
+          ...(truncated ? { truncated: true } : {}),
+        };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return {
-          error: `Failed to execute command: ${message}`,
+          error: `Failed to find files: ${message}`,
         };
       }
     },

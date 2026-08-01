@@ -18,6 +18,7 @@ export function createListDirectoryTool(cwd: string) {
     execute: async ({ path }) => {
       const resolved = resolve(cwd, path);
 
+      // 目录操作只允许发生在当前项目内。
       if (!resolved.startsWith(cwd)) {
         return {
           error: "Path is outside the project directory",
@@ -28,6 +29,7 @@ export function createListDirectoryTool(cwd: string) {
         const entries = await readdir(resolved);
         const results: { name: string; type: "file" | "directory" }[] = [];
 
+        // 隐藏项和依赖目录通常噪声很大，默认不展示。
         for (const entry of entries) {
           if (entry.startsWith(".") || entry === "node_modules") continue;
 
@@ -39,9 +41,12 @@ export function createListDirectoryTool(cwd: string) {
               name: entry,
               type: info.isDirectory() ? "directory" : "file",
             });
-          } catch {}
+          } catch {
+            // 单个条目读取失败时跳过，不影响整个目录的结果。
+          }
         }
 
+        // 目录排在文件前，同类型按名称排序。
         results.sort((a, b) => {
           if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
           return a.name.localeCompare(b.name);

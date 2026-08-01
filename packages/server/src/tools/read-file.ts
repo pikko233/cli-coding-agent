@@ -16,6 +16,7 @@ export function createReadFileTool(cwd: string) {
       const resolved = resolve(cwd, path);
       const rel = relative(cwd, resolved);
 
+      // 拒绝读取项目目录之外的路径。
       if (
         rel.startsWith("..") ||
         (resolve(resolved) !== resolved && rel.startsWith(".."))
@@ -32,6 +33,7 @@ export function createReadFileTool(cwd: string) {
       try {
         const content = await readFile(resolved, "utf-8");
 
+        // 大文件只返回开头，防止占用过多模型上下文。
         if (content.length > MAX_FILE_SIZE) {
           return {
             content: content.slice(0, MAX_FILE_SIZE),

@@ -4,6 +4,7 @@ import { z } from "zod";
 const MAX_OUTPUT = 20_000;
 const DEFAULT_TIMEOUT = 30_000;
 
+// 创建一个始终在项目根目录运行命令的 Shell 工具。
 export function createBashTool(cwd: string) {
   return tool({
     description:
@@ -24,6 +25,7 @@ export function createBashTool(cwd: string) {
           env: { ...process.env, TERM: "dumb" },
         });
 
+        // 防止命令一直运行，占住一次 Agent 调用。
         const timer = setTimeout(() => {
           proc.kill();
         }, timeout);
@@ -36,6 +38,7 @@ export function createBashTool(cwd: string) {
         const exitCode = await proc.exited;
         clearTimeout(timer);
 
+        // 限制返回给模型的内容，避免超长日志挤占上下文。
         const truncate = (s: string) =>
           s.length > MAX_OUTPUT
             ? s.slice(0, MAX_OUTPUT) +

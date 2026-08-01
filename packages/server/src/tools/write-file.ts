@@ -14,6 +14,7 @@ export function createWriteFileTool(cwd: string) {
     execute: async ({ path, content }) => {
       const resolved = resolve(cwd, path);
 
+      // 文件只能写入当前项目，不能修改项目外内容。
       if (!resolved.startsWith(cwd)) {
         return {
           error: "Path is outside the project directory",
@@ -21,6 +22,7 @@ export function createWriteFileTool(cwd: string) {
       }
 
       try {
+        // 支持直接写入尚未创建的子目录。
         await mkdir(dirname(resolved), { recursive: true });
         await writeFile(resolved, content, "utf-8");
 
