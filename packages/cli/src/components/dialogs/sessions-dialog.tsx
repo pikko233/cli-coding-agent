@@ -38,6 +38,8 @@ export const SessionsDialogContent = () => {
           setLoading(false);
         }
       } catch (error) {
+        if (ignore) return;
+
         show({
           variant: "error",
           message: error instanceof Error ? error.message : "加载会话列表失败",
