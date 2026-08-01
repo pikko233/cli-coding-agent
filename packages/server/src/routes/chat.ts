@@ -226,6 +226,7 @@ const app = new Hono()
         async (stream) => {
           stream.onAbort(() => {
             abortController.abort();
+            activeResumeSessionIds.delete(sessionId);
           });
 
           try {

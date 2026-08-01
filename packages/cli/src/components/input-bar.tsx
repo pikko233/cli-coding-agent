@@ -3,13 +3,16 @@ import { EmptyBorder } from "./border";
 import { StatusBar } from "./status-bar";
 import { CommandMenu } from "./command-menu";
 import { useCallback, useEffect, useRef } from "react";
-import { useRenderer } from "@opentui/react";
+import { useKeyboard, useRenderer } from "@opentui/react";
 import { useCommandMenu } from "./command-menu/use-command-menu";
 import type { Command } from "./command-menu/type";
 import { useToast } from "../providers/toast";
 import { useKeyboardLayer } from "../providers/keyboard-layer";
 import { useDialog } from "../providers/dialog";
 import { useTheme } from "../providers/theme";
+import { useNavigate } from "react-router";
+import { usePromptConfig } from "../providers/prompt-config";
+import { Mode } from "@cli-coding-agent/database/enums";
 
 type Props = {
   onSubmit: (text: string) => void;
@@ -29,6 +32,7 @@ export const InputBar = ({
   disabled = false,
   placeholder = "有什么想问的...例: 请你分析这个项目的架构",
 }: Props) => {
+  const { mode, toggleMode, setMode, setModel } = usePromptConfig();
   const textareaRef = useRef<TextareaRenderable>(null);
   const onSubmitRef = useRef<() => void>(() => {});
   const renderer = useRenderer();
@@ -36,6 +40,7 @@ export const InputBar = ({
   const dialog = useDialog();
   const { isTopLayer, setResponder } = useKeyboardLayer();
   const { colors } = useTheme();
+  const navigate = useNavigate();
 
   const {
     showCommandMenu,
@@ -68,12 +73,16 @@ export const InputBar = ({
           exit: () => renderer.destroy(),
           toast,
           dialog,
+          navigate,
+          mode,
+          setMode,
+          setModel,
         });
       } else {
         textarea.insertText(command.value + " ");
       }
     },
-    [renderer, toast, dialog],
+    [renderer, toast, dialog, navigate, mode, toggleMode, setMode, setModel],
   );
 
   const handleCommandExecute = useCallback(
@@ -98,17 +107,6 @@ export const InputBar = ({
     textarea.setText("");
   }, [disabled, onSubmit]);
 
-  // 将textarea的submit事件与onSubmitRef可变容器绑定在一起
-  // 当组件重新渲染时，onSubmitRef.current都会指向最新的textarea的submit
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    textarea.onSubmit = () => {
-      onSubmitRef.current();
-    };
-  }, []);
-
   onSubmitRef.current = () => {
     if (disabled) return;
 
@@ -122,6 +120,26 @@ export const InputBar = ({
     // 否则，向AI Agent发送问题请求
     handleSubmit();
   };
+
+  useKeyboard((key) => {
+    if (disabled) return;
+    if (!isTopLayer("base")) return;
+    if (key.name === "tab") {
+      key.preventDefault();
+      toggleMode();
+    }
+  });
+
+  // 将textarea的submit事件与onSubmitRef可变容器绑定在一起
+  // 当组件重新渲染时，onSubmitRef.current都会指向最新的textarea的submit
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.onSubmit = () => {
+      onSubmitRef.current();
+    };
+  }, []);
 
   // 页面初始化挂载时，将base压入栈中
   useEffect(() => {
@@ -146,7 +164,7 @@ export const InputBar = ({
       {/* 左边框 */}
       <box
         border={["left"]}
-        borderColor={colors.primary}
+        borderColor={mode === Mode.BUILD ? colors.primary : colors.planMode}
         width="100%"
         customBorderChars={{
           ...EmptyBorder,

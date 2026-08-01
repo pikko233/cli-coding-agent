@@ -1,13 +1,19 @@
-import { ThemeDialogContent } from "../dialogs/theme-dialog";
+import { SUPPORTED_CHAT_MODELS } from "@cli-coding-agent/shared";
+import {
+  AgentsDialogContent,
+  ModelsDialogContent,
+  SessionsDialogContent,
+  ThemeDialogContent,
+} from "../dialogs";
 import type { Command } from "./type";
 
 export const COMMANDS: Command[] = [
   {
     name: "new",
-    description: "Start a new conversation(开始一段新对话)",
+    description: "Start a new conversation(开始新对话)",
     value: "/new",
     action: (ctx) => {
-      ctx.toast.show({ message: "已开启新对话~" });
+      ctx.navigate("/");
     },
   },
   {
@@ -17,7 +23,12 @@ export const COMMANDS: Command[] = [
     action: (ctx) => {
       ctx.dialog.open({
         title: "请选择智能体",
-        children: <text>此功能将稍后推出，敬请期待</text>,
+        children: (
+          <AgentsDialogContent
+            currentMode={ctx.mode}
+            onSelectMode={ctx.setMode}
+          />
+        ),
       });
     },
   },
@@ -26,7 +37,15 @@ export const COMMANDS: Command[] = [
     description: "Select an AI model(选择AI模型用于对话)",
     value: "/model",
     action: (ctx) => {
-      ctx.toast.show({ message: "请选择模型" });
+      ctx.dialog.open({
+        title: "请选择模型",
+        children: (
+          <ModelsDialogContent
+            models={SUPPORTED_CHAT_MODELS.map((m) => m.id)}
+            onSelectModel={ctx.setModel}
+          />
+        ),
+      });
     },
   },
   {
@@ -34,7 +53,10 @@ export const COMMANDS: Command[] = [
     description: "Browse past sessions(浏览过往会话记录)",
     value: "/session",
     action: (ctx) => {
-      ctx.toast.show({ message: "加载对话中..." });
+      ctx.dialog.open({
+        title: "选择会话",
+        children: <SessionsDialogContent />,
+      });
     },
   },
   {
