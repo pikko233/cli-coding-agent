@@ -15,6 +15,7 @@ import {
 import { createTools } from "../tools";
 import { buildSystemPrompt } from "../system-prompt";
 import { isSupportedChatModel, resolveChatModel } from "../lib/models";
+import type { AuthenticatedEnv } from "../middleware/require-auth";
 
 const submitSchema = z.object({
   content: z.string().trim().min(1, "消息内容不能为空"),
@@ -297,13 +298,14 @@ async function streamAIResponse(
   }
 }
 
-const app = new Hono()
+const app = new Hono<AuthenticatedEnv>()
   // 当最后一句话为用户消息、缺少AI助手回复时，重新请求AI接口。
   .post("/:sessionId/resume", async (c) => {
+    const userId = c.get("userId");
     const sessionId = c.req.param("sessionId");
 
     const session = await db.session.findUnique({
-      where: { id: sessionId },
+      where: { id: sessionId, userId },
       include: { messages: { orderBy: { createdAt: "asc" } } },
     });
 
@@ -376,9 +378,10 @@ const app = new Hono()
   // 保存用户消息，并以 SSE 流式返回模型回复。
   .post("/:sessionId", submitValidator, async (c) => {
     const sessionId = c.req.param("sessionId");
+    const userId = c.get("userId");
 
     const session = await db.session.findUnique({
-      where: { id: sessionId },
+      where: { id: sessionId, userId },
       include: { messages: { orderBy: { createdAt: "asc" } } },
     });
 

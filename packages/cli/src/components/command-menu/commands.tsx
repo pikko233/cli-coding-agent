@@ -7,6 +7,9 @@ import {
 } from "../dialogs";
 import type { Command } from "./type";
 
+import { performLogin } from "../../lib/oauth";
+import { clearAuth } from "../../lib/auth";
+
 export const COMMANDS: Command[] = [
   {
     name: "new",
@@ -74,8 +77,20 @@ export const COMMANDS: Command[] = [
     name: "login",
     description: "Sign in with your browser(打开浏览器登录)",
     value: "/login",
-    action: (ctx) => {
-      ctx.toast.show({ message: "正在打开浏览器..." });
+    action: async (ctx) => {
+      ctx.toast.show({ message: "正在打开浏览器登录..." });
+
+      try {
+        await performLogin();
+        ctx.toast.show({ variant: "success", message: "登录成功~" });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Sign in failed or timed out";
+
+        ctx.toast.show({ variant: "error", message });
+      }
     },
   },
   {
@@ -83,6 +98,7 @@ export const COMMANDS: Command[] = [
     description: "Sign out of your account(退出登录)",
     value: "/logout",
     action: (ctx) => {
+      clearAuth();
       ctx.toast.show({ message: "已退出登录~" });
     },
   },
