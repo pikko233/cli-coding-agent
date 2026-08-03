@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "@cli-coding-agent/database/client";
 import { Role, Mode, MessageStatus } from "@cli-coding-agent/database/enums";
+import type { AuthenticatedEnv } from "../middleware/require-auth";
 
 const createSessionSchema = z.object({
   title: z.string(),
@@ -31,9 +32,12 @@ const createSessionValidator = zValidator(
   },
 );
 
-const app = new Hono()
+const app = new Hono<AuthenticatedEnv>()
   .get("/", async (c) => {
+    const userId = c.get("userId");
+
     const sessions = await db.session.findMany({
+      where: { userId },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -50,8 +54,10 @@ const app = new Hono()
   })
   .get("/:id", async (c) => {
     const id = c.req.param("id");
+    const userId = c.get("userId");
+
     const session = await db.session.findUnique({
-      where: { id },
+      where: { id, userId },
       include: {
         messages: {
           orderBy: {
@@ -64,7 +70,7 @@ const app = new Hono()
     if (!session) {
       Sentry.logger.warn("会话不存在", {
         sessionId: id,
-        userId: "mock-user",
+        userId: userId,
       });
 
       return c.json(
@@ -83,12 +89,14 @@ const app = new Hono()
     return c.json(session);
   })
   .post("/", createSessionValidator, async (c) => {
+    const userId = c.get("userId");
+
     const { initialMessage, ...data } = c.req.valid("json");
 
     const session = await db.session.create({
       data: {
         ...data,
-        userId: "mock-user",
+        userId: userId,
         ...(initialMessage && {
           messages: {
             create: {
