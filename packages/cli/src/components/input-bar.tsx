@@ -286,7 +286,7 @@ function FileMentionMenu({
   if (candidates.length === 0) {
     return (
       <box paddingX={1}>
-        <text attributes={TextAttributes.DIM}>No matching files or folder</text>
+        <text attributes={TextAttributes.DIM}>没有匹配的文件或目录</text>
       </box>
     );
   }
@@ -406,7 +406,7 @@ export const InputBar = ({
       });
 
       if (mentionChanged) {
-        setSelectedIndex(0);
+        setMentionSelectedIndex(0);
         mentionScrollRef.current?.scrollTo(0);
       }
     },
@@ -496,10 +496,7 @@ export const InputBar = ({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    syncMentionMenu(
-      textarea.plainText,
-      getCursorCharacterOffset(textarea),
-    );
+    syncMentionMenu(textarea.plainText, getCursorCharacterOffset(textarea));
   }, [syncMentionMenu]);
 
   onSubmitRef.current = () => {
@@ -517,7 +514,9 @@ export const InputBar = ({
       const candidate = mentionCandidates[mentionSelectedIndex];
       if (candidate) {
         handleMentionExecute(mentionSelectedIndex);
+        return;
       }
+      closeMentionMenu();
       return;
     }
 

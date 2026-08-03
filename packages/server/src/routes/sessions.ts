@@ -70,7 +70,7 @@ const app = new Hono<AuthenticatedEnv>()
     if (!session) {
       Sentry.logger.warn("会话不存在", {
         sessionId: id,
-        userId: "mock-user",
+        userId: userId,
       });
 
       return c.json(
