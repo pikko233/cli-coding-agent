@@ -36,8 +36,8 @@ export function Home() {
       >
         <InputBar onSubmit={handleSubmit} disabled={false} />
         <box flexDirection="row" gap={1} flexShrink={0} marginLeft="auto">
-          <text>tab</text>
-          <text attributes={TextAttributes.DIM}>切换智能体模式</text>
+          <text>按tab</text>
+          <text attributes={TextAttributes.DIM}>切换智能体</text>
         </box>
       </box>
     </box>

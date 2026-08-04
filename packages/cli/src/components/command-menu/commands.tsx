@@ -10,10 +10,12 @@ import type { Command } from "./type";
 import { performLogin } from "../../lib/oauth";
 import { clearAuth } from "../../lib/auth";
 
+import { openUpgradeCheckout, openBillingPortal } from "../../lib/upgrade";
+
 export const COMMANDS: Command[] = [
   {
     name: "new",
-    description: "Start a new conversation(开始新对话)",
+    description: "开始新对话",
     value: "/new",
     action: (ctx) => {
       ctx.navigate("/");
@@ -21,7 +23,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "agent",
-    description: "Switch agent(切换智能体)",
+    description: "切换智能体",
     value: "/agent",
     action: (ctx) => {
       ctx.dialog.open({
@@ -37,7 +39,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "model",
-    description: "Select an AI model(选择AI模型用于对话)",
+    description: "选择用于对话的 AI 模型",
     value: "/model",
     action: (ctx) => {
       ctx.dialog.open({
@@ -53,7 +55,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "session",
-    description: "Browse past sessions(浏览过往会话记录)",
+    description: "浏览历史会话",
     value: "/session",
     action: (ctx) => {
       ctx.dialog.open({
@@ -64,7 +66,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "theme",
-    description: "Change color theme(切换颜色主题)",
+    description: "切换颜色主题",
     value: "/theme",
     action: (ctx) => {
       ctx.dialog.open({
@@ -75,7 +77,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "login",
-    description: "Sign in with your browser(打开浏览器登录)",
+    description: "在浏览器中登录",
     value: "/login",
     action: async (ctx) => {
       ctx.toast.show({ message: "正在打开浏览器登录..." });
@@ -95,7 +97,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "logout",
-    description: "Sign out of your account(退出登录)",
+    description: "退出登录",
     value: "/logout",
     action: (ctx) => {
       clearAuth();
@@ -104,23 +106,49 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "upgrade",
-    description: "Buy more credits(充值余额)",
+    description: "充值余额",
     value: "/upgrade",
-    action: (ctx) => {
+    action: async (ctx) => {
       ctx.toast.show({ message: "正在打开网页..." });
+
+      try {
+        await openUpgradeCheckout();
+        ctx.toast.show({
+          variant: "success",
+          message: "已在浏览器中打开充值页面",
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "无法打开充值页面";
+        ctx.toast.show({ variant: "error", message });
+      }
     },
   },
   {
     name: "usage",
-    description: "Open billing portal in your browser(在浏览器端打开账单)",
+    description: "在浏览器中打开账单页面",
     value: "/usage",
-    action: (ctx) => {
+    action: async (ctx) => {
       ctx.toast.show({ message: "正在打开网页..." });
+
+      try {
+        await openBillingPortal();
+        ctx.toast.show({
+          variant: "success",
+          message: "已在浏览器中打开账单页面",
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "无法打开账单页面";
+        ctx.toast.show({ variant: "error", message });
+      }
     },
   },
   {
     name: "exit",
-    description: "Exit the application(退出应用程序)",
+    description: "退出应用程序",
     value: "/exit",
     action: (ctx) => {
       ctx.exit();

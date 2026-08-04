@@ -34,7 +34,7 @@ export const usePromptConfig = (): PromptConfigContextValue => {
 };
 
 export function PromptConfigProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<Mode>(Mode.BUILD);
+  const [mode, setMode] = useState<Mode>(Mode.PLAN);
   const [model, setModel] = useState<SupportedChatModelId>(
     DEFAULT_CHAT_MODEL_ID,
   );

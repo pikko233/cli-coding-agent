@@ -2,7 +2,11 @@ import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { streamText as aiStreamText, stepCountIs } from "ai";
+import {
+  streamText as aiStreamText,
+  stepCountIs,
+  type LanguageModelUsage,
+} from "ai";
 import { db } from "@cli-coding-agent/database/client";
 import { Mode, MessageStatus, Role } from "@cli-coding-agent/database/enums";
 import type { Prisma } from "@cli-coding-agent/database";
@@ -16,6 +20,9 @@ import { createTools } from "../tools";
 import { buildSystemPrompt } from "../system-prompt";
 import { isSupportedChatModel, resolveChatModel } from "../lib/models";
 import type { AuthenticatedEnv } from "../middleware/require-auth";
+import { calculateCreditsForUsage } from "../lib/credit";
+import { ingestAiUsage } from "../lib/polar";
+import { requireCreditsBalance } from "../middleware/require-credits-balance";
 
 const submitSchema = z.object({
   content: z.string().trim().min(1, "消息内容不能为空"),
@@ -69,6 +76,7 @@ function getResumableUserMessage(
 
 type StreamParams = {
   sessionId: string;
+  userId: string;
   model: string;
   cwd: string | null;
   history: { role: "user" | "assistant"; content: string }[];
@@ -76,17 +84,25 @@ type StreamParams = {
   abortController: AbortController;
 };
 
+type IngestUsageForMessageParams = {
+  messageId: string;
+  status: MessageStatus;
+};
+
 // 调用模型，将AI回复的文本片段持续推送给客户端，并保存最终结果。
 async function streamAIResponse(
   stream: Parameters<Parameters<typeof streamSSE>[1]>[0],
   params: StreamParams,
 ) {
-  const { sessionId, model, cwd, history, mode, abortController } = params;
+  const { sessionId, userId, model, cwd, history, mode, abortController } =
+    params;
   const startTime = Date.now();
   const resolvedModal = resolveChatModel(model);
   const parts: MessagePart[] = [];
   const tools = cwd ? createTools(cwd, mode) : undefined;
+  let completedUsage: LanguageModelUsage | null = null;
 
+  // 存储被打断的AI回复消息
   const persistInterruptedMessage = async () => {
     const fullText = parts
       .filter((p) => p.type === "text")
@@ -100,7 +116,7 @@ async function streamAIResponse(
     const validatedParts: Prisma.InputJsonValue | undefined =
       parts.length > 0 ? messagePartsSchema.parse(parts) : undefined;
 
-    await db.message.create({
+    return db.message.create({
       data: {
         sessionId,
         role: "ASSISTANT",
@@ -114,6 +130,47 @@ async function streamAIResponse(
     });
   };
 
+  const ingestUsageForMessage = async ({
+    messageId,
+    status,
+  }: IngestUsageForMessageParams) => {
+    if (!completedUsage) return;
+
+    try {
+      // 计算本次AI消息的用量
+      const billableUsage = calculateCreditsForUsage({
+        provider: resolvedModal.provider,
+        model: resolvedModal.modelId,
+        usage: completedUsage,
+      });
+
+      // 计入Polar的用户账户用量
+      await ingestAiUsage({
+        externalCustomerId: userId,
+        eventId: `chat-message:${messageId}`,
+        credits: billableUsage.credits,
+      });
+    } catch (error) {
+      console.error("向 Polar 上报消息的 AI 用量失败", {
+        error,
+        sessionId,
+        messageId,
+        userId,
+      });
+    }
+  };
+
+  const persistInterruptedMessageAndUsage = async () => {
+    const interruptedMessage = await persistInterruptedMessage();
+
+    if (!interruptedMessage) return;
+
+    await ingestUsageForMessage({
+      messageId: interruptedMessage.id,
+      status: MessageStatus.INTERRUPTED,
+    });
+  };
+
   try {
     const result = aiStreamText({
       model: resolvedModal.model,
@@ -123,6 +180,9 @@ async function streamAIResponse(
       messages: history,
       abortSignal: abortController.signal,
       providerOptions: resolvedModal.providerOptions,
+      onFinish(event) {
+        completedUsage = event.usage;
+      },
     });
 
     // 一边向客户端转发文本片段，一边拼接完整回复。
@@ -228,7 +288,7 @@ async function streamAIResponse(
 
     // 客户端断开后保存未完成的回复。
     if (stream.aborted || abortController.signal.aborted) {
-      await persistInterruptedMessage();
+      await persistInterruptedMessageAndUsage();
       return;
     }
 
@@ -254,6 +314,11 @@ async function streamAIResponse(
       },
     });
 
+    await ingestUsageForMessage({
+      messageId: assistantMessage.id,
+      status: MessageStatus.COMPLETE,
+    });
+
     const doneEvent: ChatStreamEvent = {
       type: "done",
       messageId: assistantMessage.id,
@@ -266,7 +331,7 @@ async function streamAIResponse(
     });
   } catch (error) {
     if (abortController.signal.aborted) {
-      await persistInterruptedMessage();
+      await persistInterruptedMessageAndUsage();
       return;
     }
 
@@ -346,6 +411,7 @@ const app = new Hono<AuthenticatedEnv>()
           try {
             await streamAIResponse(stream, {
               sessionId,
+              userId,
               model: resumableMessage.model,
               cwd: session.cwd,
               history,
@@ -376,7 +442,7 @@ const app = new Hono<AuthenticatedEnv>()
     }
   })
   // 保存用户消息，并以 SSE 流式返回模型回复。
-  .post("/:sessionId", submitValidator, async (c) => {
+  .post("/:sessionId", requireCreditsBalance, submitValidator, async (c) => {
     const sessionId = c.req.param("sessionId");
     const userId = c.get("userId");
 
@@ -424,6 +490,7 @@ const app = new Hono<AuthenticatedEnv>()
 
         await streamAIResponse(stream, {
           sessionId,
+          userId,
           model: data.model,
           cwd: session.cwd,
           history,
