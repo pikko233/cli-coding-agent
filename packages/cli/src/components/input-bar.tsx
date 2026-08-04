@@ -315,7 +315,7 @@ function FileMentionMenu({
 
             <box width={8} alignItems="flex-end" flexShrink={0}>
               <text selectable={false} fg={isSelected ? "black" : "gray"}>
-                {candidate.kind === "directory" ? "Folder" : "File"}
+                {candidate.kind === "directory" ? "文件夹" : "文件"}
               </text>
             </box>
           </box>

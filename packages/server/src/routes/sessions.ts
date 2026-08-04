@@ -6,6 +6,8 @@ import { z } from "zod";
 import { db } from "@cli-coding-agent/database/client";
 import { Role, Mode, MessageStatus } from "@cli-coding-agent/database/enums";
 import type { AuthenticatedEnv } from "../middleware/require-auth";
+import { isSupportedChatModel } from "../lib/models";
+import { requireCreditsBalance } from "../middleware/require-credits-balance";
 
 const createSessionSchema = z.object({
   title: z.string(),
@@ -15,9 +17,7 @@ const createSessionSchema = z.object({
       role: z.enum(Role),
       content: z.string(),
       mode: z.enum(Mode),
-      model: z
-        .string()
-        .refine((id) => !!findSupportedChatModel(id), "暂不支持该模型"),
+      model: z.string().refine(isSupportedChatModel, "暂不支持该模型"),
     })
     .optional(),
 });
@@ -88,7 +88,7 @@ const app = new Hono<AuthenticatedEnv>()
 
     return c.json(session);
   })
-  .post("/", createSessionValidator, async (c) => {
+  .post("/", requireCreditsBalance, createSessionValidator, async (c) => {
     const userId = c.get("userId");
 
     const { initialMessage, ...data } = c.req.valid("json");

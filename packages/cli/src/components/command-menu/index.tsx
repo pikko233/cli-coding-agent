@@ -31,9 +31,7 @@ export const CommandMenu = ({
   if (filters.length === 0) {
     return (
       <box paddingX={1}>
-        <text attributes={TextAttributes.DIM}>
-          No matching commands-暂无匹配的命令
-        </text>
+        <text attributes={TextAttributes.DIM}>暂无匹配的命令</text>
       </box>
     );
   }
