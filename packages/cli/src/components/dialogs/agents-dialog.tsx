@@ -1,16 +1,16 @@
 import { useCallback } from "react";
 import { useDialog } from "../../providers/dialog";
 import { DialogSearchList } from "../dialog-search-list";
-import { Mode } from "@cli-coding-agent/database/enums";
+import { Mode, type ModeType } from "@cli-coding-agent/shared";
 
 const AVAILABLE_MODES = [Mode.BUILD, Mode.PLAN];
 
 type AgentsDialogContentProps = {
-  currentMode: Mode;
-  onSelectMode: (mode: Mode) => void;
+  currentMode: ModeType;
+  onSelectMode: (mode: ModeType) => void;
 };
 
-function getModeLabel(mode: Mode) {
+function getModeLabel(mode: ModeType) {
   return mode === Mode.BUILD ? "Build" : "Plan";
 }
 
@@ -22,7 +22,7 @@ export const AgentsDialogContent = ({
 
   // 回车确认
   const handleSelect = useCallback(
-    (mode: Mode) => {
+    (mode: ModeType) => {
       onSelectMode(mode);
       dialog.close();
     },

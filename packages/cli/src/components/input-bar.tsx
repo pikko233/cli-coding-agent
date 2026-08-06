@@ -25,7 +25,7 @@ import { useDialog } from "../providers/dialog";
 import { useTheme } from "../providers/theme";
 import { useNavigate } from "react-router";
 import { usePromptConfig } from "../providers/prompt-config";
-import { Mode } from "@cli-coding-agent/database/enums";
+import { Mode } from "@cli-coding-agent/shared";
 
 const MAX_VISIBLE_MENTIONS = 8; //  输入 @ 后，下拉列表最多显示 8 个候选文件
 const CURRENT_DIRECTORY = process.cwd(); // 当前工作目录，搜索候选文件时以这里为起点

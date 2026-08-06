@@ -1,6 +1,6 @@
 import "opentui-spinner/react";
 import { useTheme } from "../providers/theme";
-import { Mode } from "@cli-coding-agent/database/enums";
+import { Mode } from "@cli-coding-agent/shared";
 import { usePromptConfig } from "../providers/prompt-config";
 
 export function Spinner() {
