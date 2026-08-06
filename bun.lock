@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "cli-coding-agent",
+      "dependencies": {
+        "dotenv": "^17.4.2",
+      },
     },
     "packages/cli": {
       "name": "@cli-coding-agent/cli",
