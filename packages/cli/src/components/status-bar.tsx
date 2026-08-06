@@ -2,7 +2,7 @@ import { TextAttributes } from "@opentui/core";
 import { useTheme } from "../providers/theme";
 import { DEFAULT_CHAT_MODEL_ID } from "@cli-coding-agent/shared";
 import { usePromptConfig } from "../providers/prompt-config";
-import { Mode } from "@cli-coding-agent/database/enums";
+import { Mode } from "@cli-coding-agent/shared";
 
 export const StatusBar = () => {
   const { colors } = useTheme();

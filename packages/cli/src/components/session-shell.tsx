@@ -31,7 +31,7 @@ export function SessionShell({
     >
       {/* 对话滚动区域 */}
       <scrollbox flexGrow={1} width="100%" stickyScroll stickyStart="bottom">
-        <box gap={1}>{children}</box>
+        <box>{children}</box>
       </scrollbox>
 
       {/* 输入框 */}

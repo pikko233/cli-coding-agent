@@ -1,11 +1,11 @@
 import { TextAttributes } from "@opentui/core";
 import { useTheme } from "../../providers/theme";
 import { SplitBorder } from "../border";
-import { Mode } from "@cli-coding-agent/database";
+import { Mode, type ModeType } from "@cli-coding-agent/shared";
 
 type Props = {
   message: string;
-  mode: Mode;
+  mode: ModeType;
 };
 
 export function UserMessage({ message, mode }: Props) {

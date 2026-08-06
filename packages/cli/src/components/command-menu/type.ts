@@ -1,15 +1,14 @@
-import type { Mode } from "@cli-coding-agent/database/enums";
 import type { DialogContextValue } from "../../providers/dialog";
 import type { ToastContextValue } from "../../providers/toast";
-import type { SupportedChatModelId } from "@cli-coding-agent/shared";
+import type { SupportedChatModelId, ModeType } from "@cli-coding-agent/shared";
 
 export type CommandContext = {
   exit: () => void;
   toast: ToastContextValue;
   dialog: DialogContextValue;
   navigate: (path: string) => void;
-  mode: Mode;
-  setMode: (mode: Mode) => void;
+  mode: ModeType;
+  setMode: (mode: ModeType) => void;
   setModel: (model: SupportedChatModelId) => void;
 };
 

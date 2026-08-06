@@ -1,7 +1,8 @@
-import { Mode } from "@cli-coding-agent/database/enums";
 import {
   DEFAULT_CHAT_MODEL_ID,
+  Mode,
   type SupportedChatModelId,
+  type ModeType,
 } from "@cli-coding-agent/shared";
 import {
   createContext,
@@ -12,9 +13,9 @@ import {
 } from "react";
 
 type PromptConfigContextValue = {
-  mode: Mode;
+  mode: ModeType;
   toggleMode: () => void;
-  setMode: (mode: Mode) => void;
+  setMode: (mode: ModeType) => void;
   model: SupportedChatModelId;
   setModel: (model: SupportedChatModelId) => void;
 };
@@ -34,7 +35,7 @@ export const usePromptConfig = (): PromptConfigContextValue => {
 };
 
 export function PromptConfigProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<Mode>(Mode.PLAN);
+  const [mode, setMode] = useState<ModeType>(Mode.BUILD);
   const [model, setModel] = useState<SupportedChatModelId>(
     DEFAULT_CHAT_MODEL_ID,
   );
